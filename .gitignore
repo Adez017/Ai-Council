@@ -171,6 +171,14 @@ data/
 cache/
 logs/
 *.log
+plugins/
+.kiro/
+demo_config.yaml
+*_example.py
+usage_example.py
+how_to_use.py
+simple_usage.py
+custom_config_example.py
 
 # OS specific
 .DS_Store

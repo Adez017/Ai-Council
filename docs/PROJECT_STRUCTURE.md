@@ -12,11 +12,9 @@ ai-council/
 ├── 📁 tests/                   # Test suite (95 tests)
 ├── 📁 config/                  # Configuration files
 ├── 📁 scripts/                 # Utility scripts
-├── 📁 .kiro/                   # Development specifications
 ├── 📄 README.md                # Main project documentation
 ├── 📄 pyproject.toml           # Project configuration
-├── 📄 .gitignore               # Git ignore rules
-└── 📄 system_validation_report.md  # System status report
+└── 📄 .gitignore               # Git ignore rules
 ```
 
 ## 🧠 Core Library (`ai_council/`)
