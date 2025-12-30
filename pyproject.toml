@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ai-council"
+name = "ai-council-orchestrator"
 version = "1.0.0"
 description = "A production-grade multi-agent AI orchestration system that intelligently coordinates multiple AI models"
 readme = "README.md"
@@ -64,10 +64,12 @@ test = [
 [project.urls]
 Homepage = "https://github.com/shrixtacy/Ai-Council"
 Repository = "https://github.com/shrixtacy/Ai-Council"
-Documentation = "https://github.com/shrixtacy/Ai-Council/tree/master/docs"
+Documentation = "https://github.com/shrixtacy/Ai-Council/tree/main/docs"
 "Bug Tracker" = "https://github.com/shrixtacy/Ai-Council/issues"
 "Source Code" = "https://github.com/shrixtacy/Ai-Council"
-"Download" = "https://pypi.org/project/ai-council/"
+"PyPI Package" = "https://pypi.org/project/ai-council-orchestrator/"
+"Contributing" = "https://github.com/shrixtacy/Ai-Council/blob/main/CONTRIBUTING.md"
+"Changelog" = "https://github.com/shrixtacy/Ai-Council/releases"
 
 [tool.setuptools.packages.find]
 where = ["."]

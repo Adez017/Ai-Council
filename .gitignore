@@ -180,6 +180,11 @@ how_to_use.py
 simple_usage.py
 custom_config_example.py
 
+# PyPI publishing
+.pypirc
+ai_council_orchestrator.egg-info/
+upload_commands.txt
+
 # OS specific
 .DS_Store
 .DS_Store?
