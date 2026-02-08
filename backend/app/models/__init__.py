@@ -6,5 +6,6 @@ from app.models.response import Response
 from app.models.subtask import Subtask
 from app.models.user_api_key import UserAPIKey
 from app.models.provider_cost import ProviderCostBreakdown
+from app.models.shared_conversation import SharedConversation
 
-__all__ = ["Base", "User", "Request", "Response", "Subtask", "UserAPIKey", "ProviderCostBreakdown"]
+__all__ = ["Base", "User", "Request", "Response", "Subtask", "UserAPIKey", "ProviderCostBreakdown", "SharedConversation"]

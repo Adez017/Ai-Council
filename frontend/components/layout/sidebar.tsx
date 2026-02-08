@@ -14,12 +14,16 @@ import {
   Menu,
   X,
   BarChart3,
+  HelpCircle,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { HelpModal } from '@/components/help/help-modal';
+import { useHelpModal } from '@/hooks/use-help-modal';
 
 interface SidebarProps {
   className?: string;
+  onRestartTour?: () => void;
 }
 
 interface ApiKeyStatus {
@@ -28,11 +32,12 @@ interface ApiKeyStatus {
   hasAnyKeys: boolean;
 }
 
-export function Sidebar({ className = '' }: SidebarProps) {
+export function Sidebar({ className = '', onRestartTour }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { isOpen: isHelpOpen, open: openHelp, close: closeHelp } = useHelpModal();
   const [apiKeyStatus, setApiKeyStatus] = useState<ApiKeyStatus>({
     configuredProviders: 0,
     totalProviders: 0,
@@ -77,11 +82,12 @@ export function Sidebar({ className = '' }: SidebarProps) {
       icon: History,
       href: '/history',
       show: true,
+      dataTour: 'history-link',
     },
     {
       label: 'Analytics',
       icon: BarChart3,
-      href: '/dashboard',
+      href: '/analytics',
       show: true,
     },
     {
@@ -92,6 +98,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
       badge: !apiKeyStatus.hasAnyKeys ? 'Setup' : apiKeyStatus.configuredProviders > 0 ? apiKeyStatus.configuredProviders.toString() : undefined,
       badgeVariant: !apiKeyStatus.hasAnyKeys ? 'destructive' : 'default',
       highlight: !apiKeyStatus.hasAnyKeys,
+      dataTour: 'settings-link',
     },
     {
       label: 'Admin',
@@ -137,6 +144,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 router.push(item.href);
                 setIsMobileOpen(false);
               }}
+              data-tour={(item as any).dataTour}
             >
               <Icon className="h-4 w-4" />
               <span className="flex-1 text-left">{item.label}</span>
@@ -154,7 +162,36 @@ export function Sidebar({ className = '' }: SidebarProps) {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t space-y-1">
+        {/* Help Button */}
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+          onClick={() => {
+            openHelp();
+            setIsMobileOpen(false);
+          }}
+          data-tour="help-button"
+        >
+          <HelpCircle className="h-4 w-4" />
+          <span>Help & Shortcuts</span>
+        </Button>
+        
+        {/* Restart Tour Button */}
+        {onRestartTour && (
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              onRestartTour();
+              setIsMobileOpen(false);
+            }}
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span>Restart Tour</span>
+          </Button>
+        )}
+        
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
@@ -169,6 +206,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
 
   return (
     <>
+      <HelpModal open={isHelpOpen} onOpenChange={closeHelp} />
       {/* Mobile Menu Button */}
       <Button
         variant="ghost"

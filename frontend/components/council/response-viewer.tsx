@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import type { CouncilResponse } from '@/types/council';
 import { Copy, Download, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { HelpIcon } from '@/components/help/help-icon';
+import { WhatsThisLink } from '@/components/help/whats-this-link';
 
 interface ResponseViewerProps {
   response: CouncilResponse;
@@ -85,7 +87,13 @@ export function ResponseViewer({ response }: ResponseViewerProps) {
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Final Response</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Final Response</CardTitle>
+            <HelpIcon 
+              content="This is the synthesized response combining insights from all AI models that worked on your query."
+              side="right"
+            />
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -129,7 +137,13 @@ export function ResponseViewer({ response }: ResponseViewerProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Confidence Score */}
           <div className="p-4 bg-muted/50 rounded-lg border">
-            <div className="text-xs text-muted-foreground mb-1">Confidence Score</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <span>Confidence Score</span>
+              <HelpIcon 
+                content="How certain the AI models are about this response. Higher scores (>80%) indicate more reliable answers."
+                side="top"
+              />
+            </div>
             <div className="text-2xl font-bold">
               {(response.confidence * 100).toFixed(0)}%
             </div>
@@ -143,7 +157,13 @@ export function ResponseViewer({ response }: ResponseViewerProps) {
 
           {/* Total Cost */}
           <div className="p-4 bg-muted/50 rounded-lg border">
-            <div className="text-xs text-muted-foreground mb-1">Total Cost</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <span>Total Cost</span>
+              <HelpIcon 
+                content="Total cost based on tokens processed by each AI model. Calculated from actual API usage."
+                side="top"
+              />
+            </div>
             <div className="text-2xl font-bold">
               ${response.totalCost.toFixed(4)}
             </div>
@@ -154,7 +174,13 @@ export function ResponseViewer({ response }: ResponseViewerProps) {
 
           {/* Execution Time */}
           <div className="p-4 bg-muted/50 rounded-lg border">
-            <div className="text-xs text-muted-foreground mb-1">Execution Time</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <span>Execution Time</span>
+              <HelpIcon 
+                content="Total time from submission to completion. Parallel execution reduces overall time."
+                side="top"
+              />
+            </div>
             <div className="text-2xl font-bold">
               {response.executionTime.toFixed(1)}s
             </div>
@@ -167,7 +193,13 @@ export function ResponseViewer({ response }: ResponseViewerProps) {
 
           {/* Subtasks */}
           <div className="p-4 bg-muted/50 rounded-lg border">
-            <div className="text-xs text-muted-foreground mb-1">Subtasks</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+              <span>Subtasks</span>
+              <HelpIcon 
+                content="Number of smaller tasks your query was broken down into for parallel processing."
+                side="top"
+              />
+            </div>
             <div className="text-2xl font-bold">
               {response.orchestrationMetadata.totalSubtasks}
             </div>
@@ -179,7 +211,12 @@ export function ResponseViewer({ response }: ResponseViewerProps) {
 
         {/* Models Used */}
         <div className="space-y-2">
-          <h3 className="text-sm font-medium">Models Used</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-medium">Models Used</h3>
+            <WhatsThisLink 
+              content="These are the specific AI models that contributed to your response. Each was selected based on its capabilities for the assigned subtasks."
+            />
+          </div>
           <div className="flex flex-wrap gap-2">
             {response.modelsUsed.map((model, index) => (
               <div

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { CouncilResponse, SubtaskResult, ModelContribution } from '@/types/council';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { HelpIcon } from '@/components/help/help-icon';
 
 interface OrchestrationBreakdownProps {
   response: CouncilResponse;
@@ -62,7 +63,13 @@ export function OrchestrationBreakdown({ response }: OrchestrationBreakdownProps
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Orchestration Breakdown</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>Orchestration Breakdown</CardTitle>
+          <HelpIcon 
+            content="Detailed breakdown of how AI Council decomposed your query, assigned tasks to models, and processed them in parallel."
+            side="right"
+          />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Overview Section */}

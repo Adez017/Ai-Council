@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, Send, AlertCircle, CheckCircle2, DollarSign, Clock } from "lucide-react"
@@ -199,8 +200,8 @@ export function DemoQueryInterface() {
                       <p className="text-sm text-muted-foreground mt-2">
                         Or register for a free account to submit unlimited queries with full orchestration capabilities.
                       </p>
-                      <Button variant="outline" size="sm" className="mt-3">
-                        Create Free Account
+                      <Button variant="outline" size="sm" className="mt-3" asChild>
+                        <Link href="/register">Create Free Account</Link>
                       </Button>
                     </div>
                   </div>
@@ -300,7 +301,7 @@ export function DemoQueryInterface() {
           <div className="mt-6 rounded-lg bg-muted/50 border p-4 text-center">
             <p className="text-sm text-muted-foreground">
               This is a demo with simulated orchestration. 
-              <span className="font-medium text-foreground"> Register for free</span> to access real AI models and unlimited queries.
+              <Link href="/register" className="font-medium text-foreground hover:underline"> Register for free</Link> to access real AI models and unlimited queries.
             </p>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Sparkles } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/theme-toggle"
@@ -59,11 +60,11 @@ export function Navigation() {
           {/* Desktop CTA Buttons */}
           <div className="hidden items-center gap-4 md:flex">
             <ThemeToggle />
-            <Button variant="ghost" size="sm">
-              Sign In
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/login">Sign In</Link>
             </Button>
-            <Button size="sm">
-              Get Started
+            <Button size="sm" asChild>
+              <Link href="/register">Get Started</Link>
             </Button>
           </div>
 
@@ -115,11 +116,11 @@ export function Navigation() {
                 Pricing
               </button>
               <div className="flex flex-col gap-2 pt-4">
-                <Button variant="ghost" className="w-full justify-start">
-                  Sign In
+                <Button variant="ghost" className="w-full justify-start" asChild>
+                  <Link href="/login">Sign In</Link>
                 </Button>
-                <Button className="w-full justify-start">
-                  Get Started
+                <Button className="w-full justify-start" asChild>
+                  <Link href="/register">Get Started</Link>
                 </Button>
               </div>
             </div>

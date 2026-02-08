@@ -5,12 +5,13 @@ import { Sidebar } from './sidebar';
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
+  onRestartTour?: () => void;
 }
 
-export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
+export function AuthenticatedLayout({ children, onRestartTour }: AuthenticatedLayoutProps) {
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <Sidebar onRestartTour={onRestartTour} />
       <main className="flex-1 overflow-auto">
         {children}
       </main>

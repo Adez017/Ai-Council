@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { councilApi } from '@/lib/council-api';
 import type { ExecutionMode, CostEstimate } from '@/types/council';
 import { Loader2 } from 'lucide-react';
+import { HelpIcon } from '@/components/help/help-icon';
+import { InlineHint } from '@/components/help/inline-hint';
 
 interface QueryInputProps {
   onSubmit: (query: string, mode: ExecutionMode) => void;
@@ -55,14 +57,34 @@ export function QueryInput({ onSubmit, isProcessing = false }: QueryInputProps) 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Submit Your Query</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>Submit Your Query</CardTitle>
+          <HelpIcon 
+            content="AI Council breaks down complex queries into subtasks, assigns them to specialized models, and synthesizes the results. Complex, multi-part questions work best!"
+            side="right"
+          />
+        </div>
         <CardDescription>
           Ask AI Council anything. Your query will be intelligently decomposed and processed by multiple specialized AI models.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* First-time hint */}
+        <InlineHint
+          id="first-query"
+          title="💡 Pro Tip: Complex queries work best"
+          description="AI Council excels at breaking down multi-part questions. Try asking something like 'Compare React vs Vue, then recommend which to use for an enterprise app.'"
+        />
+        
         {/* Query Input */}
         <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Your Query</label>
+            <HelpIcon 
+              content="Maximum 5000 characters. The more detailed your query, the better AI Council can decompose and process it."
+              side="left"
+            />
+          </div>
           <Textarea
             placeholder="Enter your query here... (e.g., 'Explain the pros and cons of renewable energy sources')"
             value={query}

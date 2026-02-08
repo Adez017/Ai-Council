@@ -1,6 +1,7 @@
 'use client';
 
 import type { ExecutionMode, CostEstimate } from '@/types/council';
+import { HelpIcon } from '@/components/help/help-icon';
 
 interface ExecutionModeSelectorProps {
   selectedMode: ExecutionMode;
@@ -72,7 +73,13 @@ export function ExecutionModeSelector({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">Execution Mode</label>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Execution Mode</label>
+          <HelpIcon 
+            content="Execution modes control how AI Council processes your query. FAST uses fewer models for quick responses, BALANCED provides optimal speed/quality, and BEST_QUALITY uses multiple premium models for highest accuracy."
+            side="right"
+          />
+        </div>
         <span className="text-xs text-muted-foreground">
           Choose your speed/cost/quality trade-off
         </span>

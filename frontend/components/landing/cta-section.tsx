@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export function CTASection() {
   return (
@@ -16,9 +17,11 @@ export function CTASection() {
             Start with our free demo or create an account today.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button size="lg" className="w-full sm:w-auto">
-              Get Started Free
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button size="lg" className="w-full sm:w-auto" asChild>
+              <Link href="/register">
+                Get Started Free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button size="lg" variant="outline" className="w-full sm:w-auto">
               View Documentation

@@ -25,6 +25,10 @@ interface EnhancedChatInputProps {
     activeModels?: string[];
   }) => void;
   disabled?: boolean;
+  initialQuery?: string;
+  initialMode?: ExecutionMode;
+  onQueryChange?: (query: string) => void;
+  onModeChange?: (mode: ExecutionMode) => void;
 }
 
 export function EnhancedChatInput({
@@ -32,9 +36,13 @@ export function EnhancedChatInput({
   onResponseReceived,
   onProgressUpdate,
   disabled = false,
+  initialQuery = '',
+  initialMode = 'balanced',
+  onQueryChange,
+  onModeChange,
 }: EnhancedChatInputProps) {
-  const [query, setQuery] = useState('');
-  const [selectedMode, setSelectedMode] = useState<ExecutionMode>('balanced');
+  const [query, setQuery] = useState(initialQuery);
+  const [selectedMode, setSelectedMode] = useState<ExecutionMode>(initialMode);
   const [costEstimate, setCostEstimate] = useState<CostEstimate | null>(null);
   const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -43,6 +51,34 @@ export function EnhancedChatInput({
 
   const maxLength = 5000;
   const remainingChars = maxLength - query.length;
+
+  // Update query when initialQuery changes
+  useEffect(() => {
+    if (initialQuery !== query) {
+      setQuery(initialQuery);
+    }
+  }, [initialQuery]);
+
+  // Update mode when initialMode changes
+  useEffect(() => {
+    if (initialMode !== selectedMode) {
+      setSelectedMode(initialMode);
+    }
+  }, [initialMode]);
+
+  // Notify parent of query changes
+  useEffect(() => {
+    if (onQueryChange) {
+      onQueryChange(query);
+    }
+  }, [query, onQueryChange]);
+
+  // Notify parent of mode changes
+  useEffect(() => {
+    if (onModeChange) {
+      onModeChange(selectedMode);
+    }
+  }, [selectedMode, onModeChange]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -86,7 +122,10 @@ export function EnhancedChatInput({
 
     try {
       // Submit the request
-      const response = await councilApi.submitRequest(query.trim(), selectedMode);
+      const response = await councilApi.submitRequest({
+        content: query.trim(),
+        executionMode: selectedMode,
+      });
       
       // Establish WebSocket connection for real-time updates
       const ws = new WebSocket(response.websocketUrl);
@@ -153,7 +192,7 @@ export function EnhancedChatInput({
   const isValid = query.trim().length > 0 && query.length <= maxLength;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-tour="chat-input">
       {/* Main Input Area */}
       <div className="relative">
         <Textarea
@@ -188,7 +227,7 @@ export function EnhancedChatInput({
       </div>
 
       {/* Execution Mode Selector */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-tour="execution-mode">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Execution Mode</label>
           <TooltipProvider>
