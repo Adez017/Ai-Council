@@ -6,23 +6,23 @@ import { Network, Zap, DollarSign, Shield, BarChart3, Cpu } from "lucide-react"
 const features = [
   {
     icon: Network,
-    title: "Multi-Agent Orchestration",
-    description: "Complex queries are automatically decomposed and distributed across specialized AI models for optimal results."
+    title: "Multi-Provider Orchestration",
+    description: "Complex queries are automatically decomposed and distributed across specialized AI providers including OpenAI, Gemini, Ollama, and more."
   },
   {
     icon: Zap,
     title: "Parallel Execution",
-    description: "Independent tasks run simultaneously across multiple models, reducing total processing time by up to 3x."
+    description: "Independent tasks run simultaneously across multiple providers, reducing total processing time by up to 3x."
   },
   {
     icon: DollarSign,
     title: "Cost Optimization",
-    description: "Smart routing ensures each task uses the most cost-effective model, reducing expenses by up to 50%."
+    description: "Smart routing ensures each task uses the most cost-effective provider, reducing expenses by up to 50%."
   },
   {
     icon: Shield,
     title: "Quality Assurance",
-    description: "Built-in arbitration resolves conflicts between models, ensuring consistent and reliable outputs."
+    description: "Built-in arbitration resolves conflicts between providers, ensuring consistent and reliable outputs."
   },
   {
     icon: BarChart3,
@@ -31,9 +31,19 @@ const features = [
   },
   {
     icon: Cpu,
-    title: "Model Specialization",
-    description: "Each subtask is matched with the AI model best suited for that specific type of work."
+    title: "Provider Specialization",
+    description: "Each subtask is matched with the AI provider best suited for that specific type of work."
   }
+]
+
+const providers = [
+  { name: "OpenAI", logo: "🤖" },
+  { name: "Google Gemini", logo: "✨" },
+  { name: "Ollama", logo: "🦙" },
+  { name: "Together AI", logo: "🔗" },
+  { name: "OpenRouter", logo: "🌐" },
+  { name: "HuggingFace", logo: "🤗" },
+  { name: "Qwen", logo: "🔮" },
 ]
 
 export function FeaturesSection() {
@@ -45,7 +55,7 @@ export function FeaturesSection() {
             Why AI Council?
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Harness the power of multiple AI models working together to deliver superior results
+            Harness the power of multiple AI providers working together to deliver superior results
           </p>
         </div>
         
@@ -65,6 +75,24 @@ export function FeaturesSection() {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Supported Providers */}
+        <div className="mt-16 text-center">
+          <p className="text-sm font-medium text-muted-foreground mb-6">
+            SUPPORTED AI PROVIDERS
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-8">
+            {providers.map((provider, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 transition-all hover:shadow-md"
+              >
+                <span className="text-2xl">{provider.logo}</span>
+                <span className="text-sm font-medium">{provider.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

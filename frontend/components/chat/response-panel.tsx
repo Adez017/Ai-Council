@@ -20,6 +20,7 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useTheme } from '@/hooks/use-theme';
 import { OrchestrationDetailPanel } from './orchestration-detail-panel';
 import { ProgressIndicator } from './progress-indicator';
+import { ShareDialog } from './share-dialog';
 
 interface ResponsePanelProps {
   response: CouncilResponse;
@@ -29,6 +30,7 @@ interface ResponsePanelProps {
 export function ResponsePanel({ response, onClose }: ResponsePanelProps) {
   const [copied, setCopied] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { theme } = useTheme();
@@ -104,11 +106,7 @@ export function ResponsePanel({ response, onClose }: ResponsePanelProps) {
   };
 
   const handleShare = async () => {
-    // TODO: Implement sharing functionality
-    toast({
-      title: 'Coming Soon',
-      description: 'Sharing functionality will be available soon',
-    });
+    setShowShareDialog(true);
   };
 
   const scrollToTop = () => {
@@ -187,6 +185,13 @@ export function ResponsePanel({ response, onClose }: ResponsePanelProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
+      {/* Share Dialog */}
+      <ShareDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        requestId={response.requestId}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <h2 className="text-lg font-semibold">Response</h2>

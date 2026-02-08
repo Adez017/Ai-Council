@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AuthenticatedLayout } from '@/components/layout/authenticated-layout';
 import { EnhancedChatInput } from '@/components/chat/enhanced-chat-input';
@@ -9,10 +9,16 @@ import { AnalyticsPreview } from '@/components/chat/analytics-preview';
 import { ChatHistorySidebar } from '@/components/chat/chat-history-sidebar';
 import { ProgressIndicator } from '@/components/chat/progress-indicator';
 import { KeyboardShortcutsDialog } from '@/components/chat/keyboard-shortcuts-dialog';
+import { ResumeSessionDialog } from '@/components/chat/resume-session-dialog';
+import { APIKeyWizard } from '@/components/onboarding/api-key-wizard';
+import { WelcomeTour, useWelcomeTour } from '@/components/onboarding/welcome-tour';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { useAPIKeyWizard } from '@/hooks/use-api-key-wizard';
+import { useSessionPersistence } from '@/hooks/use-session-persistence';
 import { CouncilResponse } from '@/types/council';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProgressState {
   stage: 'analysis' | 'routing' | 'execution' | 'arbitration' | 'synthesis' | 'complete';
@@ -91,12 +97,13 @@ function ResponsePanelSkeleton() {
   );
 }
 
-function ChatContent() {
+function ChatContent({ shouldShowTour, completeTour }: { shouldShowTour: boolean; completeTour: () => void }) {
   const [response, setResponse] = useState<CouncilResponse | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showOrchestrationDetails, setShowOrchestrationDetails] = useState(true);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const responsePanelRef = useRef<HTMLDivElement>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -107,6 +114,54 @@ function ChatContent() {
     totalSubtasks: 0,
     activeModels: [],
   });
+  const { toast } = useToast();
+
+  // Session persistence
+  const {
+    messages,
+    draftMessage,
+    selectedMode,
+    hasUnsavedChanges,
+    sessionRestored,
+    addUserMessage,
+    addAssistantResponse,
+    clearSession,
+    hasSavedSession,
+    restoreSession,
+    updateDraftMessage,
+    updateSelectedMode,
+    saveSession,
+  } = useSessionPersistence();
+
+  // API Key Wizard
+  const { shouldShowWizard, markWizardCompleted } = useAPIKeyWizard();
+
+  // Check for saved session on mount
+  useEffect(() => {
+    if (hasSavedSession() && !sessionRestored) {
+      setShowResumeDialog(true);
+    }
+  }, [hasSavedSession, sessionRestored]);
+
+  // Restore messages if session was restored
+  useEffect(() => {
+    if (sessionRestored && messages.length > 0) {
+      // Find the last assistant response
+      const lastAssistantMessage = messages
+        .filter((m) => m.type === 'assistant')
+        .pop();
+      
+      if (lastAssistantMessage?.response) {
+        setResponse(lastAssistantMessage.response);
+        setHasSubmitted(true);
+      }
+
+      toast({
+        title: 'Session Restored',
+        description: `Restored ${messages.length} message${messages.length !== 1 ? 's' : ''} from your last session.`,
+      });
+    }
+  }, [sessionRestored, messages, toast]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
@@ -152,6 +207,14 @@ function ChatContent() {
   ]);
 
   const handleNewChat = () => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to start a new chat?'
+      );
+      if (!confirmed) return;
+    }
+    
+    clearSession();
     setResponse(null);
     setIsProcessing(false);
     setHasSubmitted(false);
@@ -168,6 +231,10 @@ function ChatContent() {
       totalSubtasks: 0,
       activeModels: [],
     });
+    
+    // Add user message to session
+    addUserMessage(content, mode as any);
+    
     // Processing will be handled by EnhancedChatInput component
   };
 
@@ -182,6 +249,9 @@ function ChatContent() {
       activeModels: [],
     });
     
+    // Add assistant response to session
+    addAssistantResponse(newResponse);
+    
     // Smooth scroll to show response when ready
     setTimeout(() => {
       responsePanelRef.current?.scrollIntoView({ 
@@ -193,6 +263,16 @@ function ChatContent() {
 
   const handleProgressUpdate = (update: Partial<ProgressState>) => {
     setProgressState((prev) => ({ ...prev, ...update }));
+  };
+
+  const handleResumeSession = () => {
+    restoreSession();
+    setShowResumeDialog(false);
+  };
+
+  const handleStartNewSession = () => {
+    clearSession();
+    setShowResumeDialog(false);
   };
 
   return (
@@ -228,6 +308,10 @@ function ChatContent() {
                 onResponseReceived={handleResponseReceived}
                 onProgressUpdate={handleProgressUpdate}
                 disabled={isProcessing}
+                initialQuery={draftMessage}
+                initialMode={selectedMode}
+                onQueryChange={updateDraftMessage}
+                onModeChange={updateSelectedMode}
               />
             </div>
 
@@ -293,15 +377,40 @@ function ChatContent() {
 
       {/* Keyboard Shortcuts Dialog */}
       <KeyboardShortcutsDialog open={showShortcuts} onOpenChange={setShowShortcuts} />
+
+      {/* Resume Session Dialog */}
+      <ResumeSessionDialog
+        open={showResumeDialog}
+        onOpenChange={setShowResumeDialog}
+        onResume={handleResumeSession}
+        onStartNew={handleStartNewSession}
+        messageCount={messages.length}
+        lastUpdated={messages.length > 0 ? messages[messages.length - 1].timestamp : undefined}
+      />
+
+      {/* API Key Setup Wizard */}
+      <APIKeyWizard
+        open={shouldShowWizard}
+        onOpenChange={(open) => {
+          if (!open) markWizardCompleted();
+        }}
+        onComplete={markWizardCompleted}
+      />
+
+      {/* Welcome Tour */}
+      <WelcomeTour run={shouldShowTour} onComplete={completeTour} />
     </div>
   );
 }
 
 export default function ChatPage() {
+  // Welcome Tour - moved to page level to pass to layout
+  const { shouldShowTour, completeTour, restartTour } = useWelcomeTour();
+
   return (
     <ProtectedRoute>
-      <AuthenticatedLayout>
-        <ChatContent />
+      <AuthenticatedLayout onRestartTour={restartTour}>
+        <ChatContent shouldShowTour={shouldShowTour} completeTour={completeTour} />
       </AuthenticatedLayout>
     </ProtectedRoute>
   );

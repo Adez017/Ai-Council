@@ -104,11 +104,11 @@ export default function RegisterPage() {
       setAuth(response.token, response.user)
       
       toast({
-        title: 'Success',
-        description: 'Your account has been created successfully',
+        title: 'Welcome to AI Council! 🎉',
+        description: 'Your account has been created successfully. Let\'s get you set up!',
       })
 
-      router.push('/dashboard')
+      router.push('/chat')
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || 'Registration failed. Please try again.'
       setGeneralError(errorMessage)
