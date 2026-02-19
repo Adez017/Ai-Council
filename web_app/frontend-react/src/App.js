@@ -14,6 +14,7 @@ import History from './pages/History';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/Errorboundary';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
