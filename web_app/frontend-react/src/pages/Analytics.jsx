@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, DollarSign, Zap, Brain } from 'lucide-react';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { ErrorMessage } from '../components/ErrorMessage';
+import { ErrorMessage } from '../components/Errormessage'
 import { SkeletonCard } from '../components/SkeletonCard';
 
 const Analytics = () => {
