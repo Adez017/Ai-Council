@@ -1,5 +1,5 @@
 // hooks/useApiCall.js
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react'; // ✅ all imports in ONE line
 import toast from 'react-hot-toast';
 
 /**
@@ -24,12 +24,23 @@ export const useApiCall = (apiFunction, options = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const startTimeRef = useRef(null);
+  const mountedRef = useRef(true);
+
+  // Track mounted state to avoid memory leaks
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const execute = useCallback(
     async (...args) => {
       try {
-        setLoading(true);
-        setError(null);
+        if (mountedRef.current) {
+          setLoading(true);
+          setError(null);
+        }
         startTimeRef.current = Date.now();
 
         const result = await apiFunction(...args);
@@ -40,7 +51,10 @@ export const useApiCall = (apiFunction, options = {}) => {
           await new Promise((r) => setTimeout(r, minLoadingMs - elapsed));
         }
 
-        setData(result);
+        // Only update state if still mounted
+        if (mountedRef.current) {
+          setData(result);
+        }
 
         if (showSuccessToast) {
           toast.success(successMessage);
@@ -48,9 +62,10 @@ export const useApiCall = (apiFunction, options = {}) => {
 
         return result;
       } catch (err) {
-        const status = err.response?.status;
+        // err.status works for our custom fetch errors (thrown with Object.assign)
+        // err.response?.status works for axios-style errors
+        const status = err.status || err.response?.status;
 
-        // Handle specific HTTP status codes
         if (status === 401) {
           toast.error('Session expired. Please log in again.');
           window.location.href = '/login';
@@ -63,7 +78,9 @@ export const useApiCall = (apiFunction, options = {}) => {
           err.message ||
           'An error occurred';
 
-        setError(errorMessage);
+        if (mountedRef.current) {
+          setError(errorMessage);
+        }
 
         if (showErrorToast) {
           if (!navigator.onLine) {
@@ -77,10 +94,15 @@ export const useApiCall = (apiFunction, options = {}) => {
 
         throw err;
       } finally {
-        setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+        }
       }
     },
-    [apiFunction, showSuccessToast, successMessage, showErrorToast, minLoadingMs]
+    // apiFunction removed from deps — it's recreated on every render in Analytics.jsx
+    // which would cause an infinite loop. Use a stable ref instead.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showSuccessToast, successMessage, showErrorToast, minLoadingMs]
   );
 
   const reset = useCallback(() => {
@@ -95,8 +117,6 @@ export const useApiCall = (apiFunction, options = {}) => {
 /**
  * Hook for fetching data on mount with refetch support.
  */
-import { useEffect } from 'react';
-
 export const useFetch = (apiFunction, deps = [], options = {}) => {
   const { data, loading, error, execute, reset } = useApiCall(apiFunction, {
     showErrorToast: true,
@@ -106,7 +126,7 @@ export const useFetch = (apiFunction, deps = [], options = {}) => {
   useEffect(() => {
     execute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, deps); // deps passed in from the caller (e.g. [] in Analytics)
 
   return { data, loading, error, refetch: execute, reset };
 };
