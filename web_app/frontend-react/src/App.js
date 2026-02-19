@@ -56,7 +56,6 @@ function App() {
         }}
       />
     <Router>
-      <Toaster position="top-right" />
       <Routes>
         {/* Public Routes */}
         <Route 
