@@ -1,17 +1,68 @@
 """
 FastAPI backend for AI Council web interface.
 """
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 import asyncio
 import json
 import sys
+import time
 from pathlib import Path
 
+# Rate limiting imports
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
+# Add ai_council to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from ai_council.main import AICouncil
+from ai_council.core.models import ExecutionMode
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
+class RateLimitHeaderMiddleware(BaseHTTPMiddleware):
+    """Middleware to add rate limit headers to responses.
+    
+    Adds standard rate limit headers to all HTTP responses for client visibility:
+    - X-RateLimit-Limit: Total requests allowed
+    - X-RateLimit-Remaining: Requests remaining in current window
+    - X-RateLimit-Reset: Unix timestamp for window reset
+    
+    Integrates with slowapi limiter to extract rate limit information.
+    """
+    
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Get rate limit info from limiter
+        if hasattr(request.state, 'rate_limit'):
+            limit = request.state.rate_limit.get("limit", 100)
+            remaining = request.state.rate_limit.get("remaining", 100)
+            reset = request.state.rate_limit.get("reset", int(time.time()) + 900)
+        else:
+            # Default values if rate limit info not available
+            limit = 100
+            remaining = 100
+            reset = int(time.time()) + 900
+        
+        # Add rate limit headers
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
+        response.headers["X-RateLimit-Reset"] = str(reset)
+        
+        return response
+
+app = FastAPI(title="AI Council API", version="1.0.0")
 from ai_council.main import AICouncil
 from ai_council.core.models import ExecutionMode
 
@@ -77,6 +128,46 @@ else:
         "http://127.0.0.1:8000"
     ]
 
+# Add rate limiting middleware
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(RateLimitHeaderMiddleware)
+
+# Rate limit exceeded handler
+app.state.limiter = limiter
+
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    """Custom rate limit exceeded handler with proper headers.
+    
+    Returns a 429 Too Many Requests response with:
+    - Standardized error format
+    - Retry-After header indicating wait time
+    - Rate limit headers for client visibility
+    
+    Args:
+        request: FastAPI request object
+        exc: RateLimitExceeded exception
+        
+    Returns:
+        JSONResponse with 429 status code and rate limit information
+    """
+    retry_after = int(exc.detail.split(" ")[-1]) if " " in exc.detail else 900
+    return JSONResponse(
+        status_code=429,
+        content={
+            "success": False,
+            "message": "Too many requests",
+            "retryAfter": retry_after
+        },
+        headers={
+            "Retry-After": str(retry_after),
+            "X-RateLimit-Limit": "100",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": str(int(time.time()) + retry_after)
+        }
+    )
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -120,6 +211,23 @@ async def get_status(ai_council: AICouncil = Depends(get_ai_council)):
 
 
 @app.post("/api/process")
+@limiter.limit("100/15minutes")
+async def process_request(request: Request, req: RequestModel):
+    """Process a user request.
+    
+    Rate limited to 100 requests per 15 minutes per IP address.
+    Main endpoint for processing user queries through the AI Council.
+    
+    Args:
+        request: FastAPI request object (used for rate limiting)
+        req: RequestModel containing query and execution mode
+        
+    Returns:
+        Processed response with content, confidence, and metadata
+        
+    Raises:
+        HTTPException: If processing fails
+    """
 async def process_request(request: RequestModel, ai_council: AICouncil = Depends(get_ai_council)):
     """Process a user request."""
     try:
@@ -130,9 +238,10 @@ async def process_request(request: RequestModel, ai_council: AICouncil = Depends
             "best_quality": ExecutionMode.BEST_QUALITY
         }
         
-        mode = mode_map.get(request.mode.lower(), ExecutionMode.BALANCED)
+        mode = mode_map.get(req.mode.lower(), ExecutionMode.BALANCED)
         
         # Process the request
+        response = ai_council.process_request(req.query, mode)
         response = await ai_council.process_request(request.query, mode)
         
         return {
@@ -152,6 +261,23 @@ async def process_request(request: RequestModel, ai_council: AICouncil = Depends
 
 
 @app.post("/api/estimate")
+@limiter.limit("100/15minutes")
+async def estimate_cost(request: Request, req: EstimateModel):
+    """Estimate cost and time for a request.
+    
+    Rate limited to 100 requests per 15 minutes per IP address.
+    Provides cost and time estimates without executing the request.
+    
+    Args:
+        request: FastAPI request object (used for rate limiting)
+        req: EstimateModel containing query and execution mode
+        
+    Returns:
+        Cost and time estimate information
+        
+    Raises:
+        HTTPException: If estimation fails
+    """
 async def estimate_cost(request: EstimateModel, ai_council: AICouncil = Depends(get_ai_council)):
     """Estimate cost and time for a request."""
     try:
@@ -161,8 +287,8 @@ async def estimate_cost(request: EstimateModel, ai_council: AICouncil = Depends(
             "best_quality": ExecutionMode.BEST_QUALITY
         }
         
-        mode = mode_map.get(request.mode.lower(), ExecutionMode.BALANCED)
-        estimate = await ai_council.estimate_cost(request.query, mode)
+        mode = mode_map.get(req.mode.lower(), ExecutionMode.BALANCED)
+        estimate = ai_council.estimate_cost(req.query, mode)
         
         return estimate
     except Exception as e:
@@ -181,7 +307,20 @@ async def analyze_tradeoffs(request: RequestModel, ai_council: AICouncil = Depen
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time updates."""
+    """WebSocket endpoint for real-time updates.
+    
+    Provides real-time communication for request processing.
+    Note: WebSocket connections are not rate limited by slowapi.
+    
+    Args:
+        websocket: WebSocket connection object
+        
+    Flow:
+        1. Accept connection
+        2. Receive JSON messages with query and mode
+        3. Send status updates during processing
+        4. Return final result
+    """
     await websocket.accept()
     ai_council: AICouncil = websocket.app.state.ai_council
     
